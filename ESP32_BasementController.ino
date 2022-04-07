@@ -57,6 +57,8 @@ MCP23S08 expander(CS_PIN_MCP23S08);
 
 // MS5525DSO pressure sensor
 MS5525DSO pressuresensor(CS_PIN_MS5525DSO);
+float pressurelosstubing = 0.014;
+
 
 // DS18B20 Temperature sensors
 OneWire oneWire(OneWirePin);
@@ -187,8 +189,8 @@ void setup()
   getLocalTime(&timeinfo);
   
   Alarm.timerRepeat(0,15,0, runalarm_15min);
-  Alarm.timerRepeat(1,0,0, runalarm_hour);
-  Alarm.alarmRepeat(dowSaturday,2,0,0, StoreWMCounters);
+  Alarm.timerRepeat(1,0,0, runalarm_hour);  // alarm for watertank level sensingde
+  Alarm.timerRepeat(168,0,0, StoreWMCounters);
 
   // Allow the hardware to sort itself out
   delay(1500);
@@ -216,6 +218,7 @@ void loop()
 
 void Check_WaterMeters() {
   long start = millis() ;
+  float temp;
   long debouncing_time = 15; //Debouncing Time in Milliseconds
   boolean current_state1, current_state2 ;
   boolean previous_state1 = digitalRead(WaterMeter1Pin) ;
@@ -227,7 +230,7 @@ void Check_WaterMeters() {
         WaterMeterCnt1++;
         dtostrf(WaterMeterCnt1, 1, 0, tempString); 
         client.publish("ESP32_Kelder/Watermeter/Counter1", tempString);
-        dtostrf((WaterMeterCnt1/1000), 1, 3, tempString); 
+        dtostrf(((float)WaterMeterCnt1/1000), 1, 3, tempString); 
         client.publish("ESP32_Kelder/Watermeter/m3_1", tempString);
      }
      previous_state1 = current_state1 ;
@@ -237,7 +240,7 @@ void Check_WaterMeters() {
         WaterMeterCnt2++;
         dtostrf(WaterMeterCnt2, 1, 0, tempString); 
         client.publish("ESP32_Kelder/Watermeter/Counter2", tempString);
-        dtostrf((WaterMeterCnt2/1000), 1, 3, tempString); 
+        dtostrf(((float)WaterMeterCnt2/1000), 1, 3, tempString); 
         client.publish("ESP32_Kelder/Watermeter/m3_2", tempString);
      }
      previous_state2 = current_state2 ;     
@@ -322,11 +325,30 @@ void FanOnMinute(){
 }
 
 void WatertankMeasurement(){
-  pressuresensor.readPressureAndTemperature(&MS5525DSO_pressure, &MS5525DSO_temperature);        // Read pressure and temperature from MS5525DSO pressure sensor
-  dtostrf(MS5525DSO_pressure, 1, 2, tempString);
+  float height, liters;
+  float average_pressure = 0;
+  float average_temp = 0;
+  for (int i = 0; i <= 4; i++) {
+    pressuresensor.readPressureAndTemperature(&MS5525DSO_pressure, &MS5525DSO_temperature);        // Read pressure and temperature from MS5525DSO pressure sensor
+    average_pressure = average_pressure + MS5525DSO_pressure;
+    average_temp = average_temp + MS5525DSO_temperature;
+  }
+  average_pressure = average_pressure/5;
+  average_temp = average_temp/5;
+  
+  dtostrf(average_pressure, 1, 2, tempString);
   client.publish("ESP32_Kelder/Watertank/Pressure", tempString);
-  dtostrf(MS5525DSO_temperature, 1, 1, tempString);
+  dtostrf(average_temp, 1, 1, tempString);
   client.publish("ESP32_Kelder/Watertank/Temperature", tempString);
+
+  height = ((average_pressure/14.504)-pressurelosstubing)/0.0980638 ;
+  dtostrf(height, 1, 2, tempString);
+  client.publish("ESP32_Kelder/Watertank/Height", tempString);
+
+  liters = (height*(3.1415*0.9*1.175))*1000;
+  dtostrf(liters, 1, 2, tempString);
+  client.publish("ESP32_Kelder/Watertank/Liter", tempString);
+
   expander.digitalWriteIO(AIRPUMP_PIN, LOW);                                                     // turn airpump off
 }
 
@@ -349,7 +371,7 @@ void reconnect()
     }
     else
     {
-      // Wait 5 seconds before retrying
+      // Wait 5 seconds before retrying 
       delay(5000);
     }
   }
@@ -357,7 +379,10 @@ void reconnect()
 
 void StoreWMCounters()
 {
+  client.publish("ESP32_Kelder/Debug/DayAlarmTriggered", "Triggered");
   EEPROM.writeUInt(WaterMeter1EEPROMAddr, WaterMeterCnt1);
   EEPROM.writeUInt(WaterMeter2EEPROMAddr, WaterMeterCnt2);
   EEPROM.commit(); 
+  client.publish("ESP32_Kelder/Debug/DayAlarmTriggeredEEPROM", "EEPROM saved");
+  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer); 
 }
