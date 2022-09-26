@@ -57,8 +57,6 @@ MCP23S08 expander(CS_PIN_MCP23S08);
 
 // MS5525DSO pressure sensor
 MS5525DSO pressuresensor(CS_PIN_MS5525DSO);
-float pressurelosstubing = 0.014;
-
 
 // DS18B20 Temperature sensors
 OneWire oneWire(OneWirePin);
@@ -328,6 +326,11 @@ void WatertankMeasurement(){
   float height, liters;
   float average_pressure = 0;
   float average_temp = 0;
+  
+  expander.digitalWriteIO(AIRPUMP_PIN, LOW);                                                       // turn airpump off
+
+  delay(200);
+  
   for (int i = 0; i <= 4; i++) {
     pressuresensor.readPressureAndTemperature(&MS5525DSO_pressure, &MS5525DSO_temperature);        // Read pressure and temperature from MS5525DSO pressure sensor
     average_pressure = average_pressure + MS5525DSO_pressure;
@@ -341,15 +344,13 @@ void WatertankMeasurement(){
   dtostrf(average_temp, 1, 1, tempString);
   client.publish("ESP32_Kelder/Watertank/Temperature", tempString);
 
-  height = ((average_pressure/14.504)-pressurelosstubing)/0.0980638 ;
+  height = (average_pressure/14.504)/0.0980638 ;
   dtostrf(height, 1, 2, tempString);
   client.publish("ESP32_Kelder/Watertank/Height", tempString);
 
   liters = (height*(3.1415*0.9*1.175))*1000;
   dtostrf(liters, 1, 2, tempString);
   client.publish("ESP32_Kelder/Watertank/Liter", tempString);
-
-  expander.digitalWriteIO(AIRPUMP_PIN, LOW);                                                     // turn airpump off
 }
 
 void reconnect()
