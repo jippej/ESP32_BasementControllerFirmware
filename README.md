@@ -1,7 +1,7 @@
-# ESP32_BasementController
+# ESP32 Basement Controller Firmware
 Basement controller based on ESP32
 
-This programm is running on the Olimex board: ESP32-PoE-ISO. The Olimex board is mounted as a shield on the JEEC Basement controller board to be found in this repository
+This programm is running on the Wireless-tag board: WT32-ETH01 ( http://www.wireless-tag.com/portfolio/wt32-eth01/ ) . The WT32-ETH01 is mounted as a shield on the JEEC Basement controller board to be found in my repositories
 
 Following functionality is included:
 1) Rainwater barrel level measurement 
