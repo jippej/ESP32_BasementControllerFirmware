@@ -74,11 +74,11 @@ bool Ventilation = false;
 IPAddress myIP(192, 168, 1, 35);
 IPAddress myGW(192, 168, 1, 1);
 IPAddress mySN(255, 255, 255, 0);
-IPAddress myDNS(8, 8, 8, 8);                      // Google DNS Server IP
-const char* mqttServer = "192.168.1.11  ";        // Broker address
-const char *ID        = "MQTTClient_SSL-Client";  // Name of our device, must be unique
-const char *TOPIC     = "MQTT_Pub";               // Topic to subcribe to
-const char *subTopic  = "MQTT_Sub";               // Topic to subcribe to
+IPAddress myDNS(8, 8, 8, 8);                          // Google DNS Server IP
+const char* mqttServer = "192.168.1.11";              // Broker address
+const char *ID        = "ESP32_Basement_Controller";  // Name of our device, must be unique
+const char *TOPIC     = "ESP32_Kelder";               // Topic to subcribe to
+const char *subTopic  = "ESP32_Kelder";               // Topic to subcribe to
 
 WebServer server(80);
 
