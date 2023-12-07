@@ -1,5 +1,5 @@
 # ESP32 Basement Controller Firmware
-Basement controller based on ESP32
+Firmware for the ESP32 Basement controller board
 
 This programm is running on the Wireless-tag board: WT32-ETH01 ( http://www.wireless-tag.com/portfolio/wt32-eth01/ ) . The WT32-ETH01 is mounted as a shield on the JEEC Basement controller board to be found in my repositories
 
